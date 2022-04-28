@@ -27,7 +27,8 @@ get_modules <- function(){
     safetymgm = "mod_safetymgm",
     sae = "mod_sae",
     ae = "mod_ae",
-    asr = "mod_asr"
+    asr = "mod_asr",
+    contacts = "mod_contacts"
   )
   return(mod)
 }

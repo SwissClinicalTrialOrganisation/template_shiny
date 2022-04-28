@@ -33,6 +33,7 @@ app_server <- function(input, output, session ) {
   callModule(mod_sae_server, mod$sae, data)
   callModule(mod_ae_server, mod$ae, data)
   callModule(mod_asr_server, mod$asr, data)
+  callModule(mod_contacts_server, mod$contacts)
 
 }
 

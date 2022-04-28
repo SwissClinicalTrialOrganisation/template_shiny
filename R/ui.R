@@ -65,9 +65,9 @@ app_ui <- function() {
                                  menuItem("Safety management", startExpanded = TRUE, icon = icon("notes-medical"),
                                           menuItem("Serious adverse events", tabName = mod$sae),
                                           menuItem("Adverse events", tabName = mod$ae),
-                                          menuItem("Annual safety report", tabName = mod$asr)
-
-                                          )),
+                                          menuItem("Annual safety report", tabName = mod$asr))),
+                        
+                        menuItem("Contacts", tabName = mod$contacts, icon = icon("home")),
 
                         ## Date range filter
                         dateRangeInput("period", "Randomization date:",
@@ -98,6 +98,7 @@ app_ui <- function() {
                         , mod_sae_ui(mod$sae, label = mod$sae)
                         , mod_ae_ui(mod$ae, label = mod$ae)
                         , mod_asr_ui(mod$asr, label = mod$asr)
+                        , mod_contacts_ui(mod$contacts, label = mod$contacts)
 
                       )
                     ) ## dashboardBody
