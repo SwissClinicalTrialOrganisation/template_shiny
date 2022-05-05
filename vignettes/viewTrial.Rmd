@@ -1,0 +1,92 @@
+---
+title: "viewTrial"
+author: 
+- Suvitha Subramaniam
+- Katharina Klatte
+date: "4/25/2022"
+output: pdf_document
+toc: true ## Table of contents
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\newpage
+
+# Introduction
+
+The R package, viewTrial, is a minimal version of a R shiny web application for centralized monitoring in clinical trials. 
+
+# Structure 
+
+* The R Shiny app is developed in a modular fashion as an R package
+* Functions required to run the app are in the /R directory. 
+
+This vignette will guide you in adapting the template to create your own R Shiny dashboard for centralized monitoring. 
+
+# Installing
+
+The package can be directly installed from [\textcolor{blue}{GitHub}] (https://github.com/suvi-subra/viewTrial). You will need to have the R package 'devtools' installed for this.
+
+```{r, eval = FALSE}
+
+devtools::install_github("suvi-subra/viewTrial")
+
+```
+
+To run the app locally on your computer after installation, run
+
+```{r, eval = FALSE}
+
+library(viewTrial)
+run_app()
+
+```
+
+# Adapting the template
+
+1. Renaming the package
+
+Change the name of the package in the DESCRIPTION file.
+
+2. Loading data: R/get_data.R
+
+In this script, raw data is loaded and processed to be used in the app. The processed data is returned as a list of named dataframes. 
+
+3. Getting reactive data: R/get_reactive.R
+
+4. Module aliases: R/get_modules.R
+
+5. UI: R/ui.R
+
+6. Server: R/server.R
+
+7. Bring it all together: R/run_app.R
+
+\newpage
+
+# Extending the app
+
+For example, let's add a tab named "Home" to the existing app. 
+
+1. Create a new R file named R/mod_home.R by copying and renaming R/mod_skeleton.R.
+
+2. Add the line home = "mod_home" to list of module aliases in R/get_modules.R.
+
+3. Add the line menuItem("Home", tabName = mod$home, icon = icon("home")) to R/ui.R. You can choose an icon from https://fontawesome.com/icons and https://getbootstrap.com/docs/3.3/components/#glyphicons.
+
+4. Add ui and server content in R/mod_home.R
+
+5. Call module in R/server.R by adding this line callModule(mod_home_server, mod$home).
+
+# Disclaimer
+
+# sessionInfo()
+
+```{r}
+
+sessionInfo()
+
+```
+

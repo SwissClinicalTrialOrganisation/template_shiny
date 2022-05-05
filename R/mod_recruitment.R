@@ -57,31 +57,34 @@ mod_recruitment_ui <- function(id, label){
 #' recruitment Server Function
 #'
 #' @noRd
-mod_recruitment_server <- function(input, output, session, data.randomized){
+mod_recruitment_server <- function(input, output, session, data){
 
   ns <- session$ns
 
+ 
+  
   output$randomized <- renderValueBox({
 
-
-    perc <- round(nrow(data.randomized())/150*100, digits = 1)
-    valueBox(value = paste0(nrow(data.randomized()), " out of ", "150", " (", perc, "%)" ),
+    df <- data() %>% filter(Visit == "Baseline")
+    perc <- round(nrow(df)/150*100, digits = 1)
+    valueBox(value = paste0(nrow(df), " out of ", "150", " (", perc, "%)" ),
              subtitle = "Randomized from pre-registered patients (those with inadequate skin flaps are not randomized)",
              icon = icon("user-plus"), color = "yellow")
   })
 
   output$estimated <- renderValueBox({
-
-    perc <- round(nrow(data.randomized())/300*100, digits = 1)
-    valueBox(value = paste0(nrow(data.randomized()), " out of ", 300, " (", perc, "%)" ),
+    df <- data() %>% filter(Visit == "Baseline")
+    perc <- round(nrow(df)/300*100, digits = 1)
+    valueBox(value = paste0(nrow(df), " out of ", 300, " (", perc, "%)" ),
              subtitle = "actual out of estimated recruitment", icon = icon("user-plus"), color = "yellow")
   })
 
 
     ## Recruitment plot
     output$recruitplot <- renderPlotly({
-      plot.df <- get_recruitment_plot_df(data.randomized())
-      max.val <- nrow(data.randomized())
+      df <- data() %>% filter(Visit == "Baseline")
+      plot.df <- get_recruitment_plot_df(df)
+      max.val <- nrow(df)
       p <- ggplot2::ggplot() + geom_line(mapping = aes(x = Baseline, y = n, color = Center), data = plot.df) +
         labs(x = "Date of randomization", y = "Patients included") +
         theme_bw() +
