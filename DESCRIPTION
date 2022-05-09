@@ -1,6 +1,6 @@
-Package: viewTrial
+Package: shinytemplate
 Type: Package
-Title: Centralized monitoring RShiny template
+Title: What the Package Does (Title Case)
 Version: 0.1.0
 Author: Who wrote it
 Maintainer: The package maintainer <yourself@somewhere.net>
@@ -18,7 +18,3 @@ Imports:
     plotly,
     shiny,
     shinydashboard
-Suggests: 
-    knitr,
-    rmarkdown
-VignetteBuilder: knitr

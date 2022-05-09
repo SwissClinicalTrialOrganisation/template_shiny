@@ -9,20 +9,26 @@
 get_modules <- function(){
   # a list of all module names
   mod <- list(
-    ## Home
-    home = "mod_home"
+    home = "mod_home",
     ## Performance measures
-    , recruit = "mod_recruit"
-    , completeness = "mod_completeness"
-    , retention = "mod_retention"
-    , consistency = "mod_consistency"
-    , timeliness = "mod_timeliness"
-    , queries = "mod_queries"
+    recruit = "mod_recruit",
+    recruit2 = "mod_recruit2",
+    recruitmap = "mod_recruitment_map",
+    recruitment_prediction = "mod_recruitment_prediction",
+    completeness = "mod_completeness",
+    retention = "mod_retention",
+    consistency = "mod_consistency",
+    timeliness = "mod_timeliness",
+    queries = "mod_queries",
     ## Study management
-    , visits = "mod_visits"
-    , completed = "mod_completed"
-    , safetymgm = "mod_safetymgm"
-    , sae = "mod_sae"
+    visits = "mod_visits",
+    completed = "mod_completed",
+    participant = "mod_participant",
+    safetymgm = "mod_safetymgm",
+    sae = "mod_sae",
+    ae = "mod_ae",
+    asr = "mod_asr",
+    contacts = "mod_contacts"
   )
   return(mod)
 }
