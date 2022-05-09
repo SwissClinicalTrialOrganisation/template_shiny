@@ -14,36 +14,26 @@ mod_queries_ui <- function(id, label){
   tabItem(tabName = label,
           
           fluidRow(
-            box(
-              width = 3
-              , selectInput(ns("visit"), "Visit", choices = c("Baseline", "FU1", "FU2"), selected = "Baseline")
-            ),
-            valueBoxOutput(ns("nrtotalqr"), width = 2),
-            valueBoxOutput(ns("nransqr"), width = 2),
-            valueBoxOutput(ns("nrresqr"), width = 2),
-            valueBoxOutput(ns("nropenqr"), width = 2)
+              box(width = 3
+                ## Select input menu for visits 
+                , selectInput(ns("visit"), "Visit", choices = c("Baseline", "FU1", "FU2"), selected = "Baseline")
+              )
+              ## Valueboxes for number of queries
+              , valueBoxOutput(ns("nrtotalqr"), width = 2)
+              , valueBoxOutput(ns("nransqr"), width = 2)
+              , valueBoxOutput(ns("nrresqr"), width = 2)
+              , valueBoxOutput(ns("nropenqr"), width = 2)
           ),
           
           fluidRow(
             tabBox(
               width = 12,
               title = "",
-              id = "tabset1", height = "600px",
+              id = "status_queries", height = "600px",
               selected = "Status of all queries",
-              tabPanel("Status of all queries", plotOutput(ns('statusplot'), height = "550"))
+              tabPanel("Status of all queries", plotOutput(ns('querystatusplot'), height = "550"))
             )
           )
-          
-          # , fluidRow(
-          #   tabBox(
-          #     width = 12,
-          #     title = "List of queries",
-          #     id = "tabset2", height = "300px",
-          #     selected = "Answered queries",
-          #     tabPanel("Answered queries",  DT::dataTableOutput(ns("ansquerytable"))),
-          #     tabPanel("Open queries",  DT::dataTableOutput(ns("openquerytable")))
-          #   )
-          # )
   )
 }
 
@@ -52,10 +42,11 @@ mod_queries_ui <- function(id, label){
 #' @noRd 
 mod_queries_server <- function(input, output, session, data){
  
+  ## Generate list of queries
   ls.queries <- reactive({
-    
+  
     nr.rows <- data() %>% nrow()
-    df <- purrr::map_dfr(1:nr.rows, get_queries, df = data())  
+    df <- purrr::map_dfr(1:nr.rows, get_queries, df = data())
     no <- df %>% nrow()
     set.seed(12481498)
     df %<>% mutate(querystatus = sample(c("answered", "open", "closed"), no, replace = TRUE, prob = c(0.5, 0.2, 0.3)))
@@ -96,7 +87,7 @@ mod_queries_server <- function(input, output, session, data){
     valueBox(value = tags$p(paste0(no, " (", perc, "%)"), style = "font-size: 80%;"), subtitle = "open", color = "red")
   })
 
-  output$statusplot <- renderPlot({
+  output$querystatusplot <- renderPlot({
 
     df <- ls.queries() %>% filter(Visit == input$visit) %>% 
       group_by(centre.short) %>% 
@@ -127,28 +118,6 @@ mod_queries_server <- function(input, output, session, data){
 
   })
 
-  # output$ansquerytable <- renderDataTable({
-  #   
-  #   df <- ls.queries() %>%
-  #     ## Get only open queries
-  #     filter(querystatus == "answered" & Visit == input$visit) %>%
-  #     arrange(centre.short) %>%
-  #     ungroup() %>%
-  #     dplyr::select("Patient ID" = pat_id, "Center" = centre.short, Visit, "Query status" = querystatus)
-  #   
-  # }, escape = FALSE)
-  # 
-  # output$openquerytable <- renderDataTable({
-  #   
-  #   df <- ls.queries() %>%
-  #     ## Get only open queries
-  #     filter(querystatus == "open" & Visit == input$visit) %>%
-  #     arrange(centre.short) %>%
-  #     ungroup() %>%
-  #     dplyr::select("Patient ID" = pat_id, "Center" = centre.short, Visit, "Query status" = querystatus)
-  #   
-  # }, escape = FALSE)
-  
 }
 
 
