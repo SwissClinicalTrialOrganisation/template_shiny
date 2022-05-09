@@ -12,6 +12,7 @@ get_visits <- function(df){
   visits <- df %>%  
     mutate(FU1.date = case_when(FU1 == TRUE ~ rando_date.date + 6*30),
            FU2.date = case_when(FU2 == TRUE ~ rando_date.date + 12*30)) %>% 
+    # select(-c(FU1, FU2)) %>% 
     mutate(FU1.qol.done = case_when(FU1 == FALSE ~ NA, TRUE ~ FU1.qol.done),
            FU2.qol.done = case_when(FU2 == FALSE ~ NA, TRUE ~ FU2.qol.done),
            bl.qol.compl = case_when(bl.qol.done == FALSE ~ NA, TRUE ~ bl.qol.compl),
@@ -80,9 +81,9 @@ get_qol_time <- function(df){
   
 }
 
-get_queries <- function(index, df){
+get_queries <- function(index, df = visits){
   
-  nr <- nrow(df)
+  nr <- nrow(visits)
   
   new.df <- df %>% 
     select(pat_id, centre.short, Visit) %>% 
@@ -94,9 +95,9 @@ get_queries <- function(index, df){
   return(result)
 }
 
-get_sae <- function(index, df){
+get_sae <- function(index, df = visits){
   
-  nr <- nrow(df)
+  nr <- nrow(visits)
   
   new.df <- df %>% 
     select(pat_id, centre.short, Visit) %>% 
