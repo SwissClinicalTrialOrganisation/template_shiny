@@ -27,9 +27,8 @@ app_server <- function(input, output, session ) {
              study_params = data$study_params,
              all_data = data$randomized)
   callModule(mod_retention_server, mod$retention, data)
-  callModule(mod_consistency_server, mod$consistency, 
-             data = rx.data$rx_consistency)
   callModule(mod_completeness_server, mod$completeness, data = data$st_data)
+  callModule(mod_consistency_server, mod$consistency, data)
   callModule(mod_timeliness_server, mod$timeliness, data)
   callModule(mod_queries_server, mod$queries, rx.data$rx_queries)
   callModule(mod_visits_server, mod$visits, data)

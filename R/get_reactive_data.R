@@ -27,15 +27,7 @@ get_reactive_data <- function(input){
       filter(data$all, rando_date.date >= input$period[1] & rando_date.date <= input$period[2])
     })
   
-  consistency_period <- reactive(
-    
-    if(input$center != "All"){
-      filter(data$consistency, centre.short == input$center & rando_date.date >= input$period[1] & rando_date.date <= input$period[2])
-      
-    } else{
-      filter(data$consistency, rando_date.date >= input$period[1] & rando_date.date <= input$period[2])
-    })
-  
+
   sae_period <- reactive(
     if(input$center != "All"){
       filter(data$sae, centre.short == input$center & sae_date >= input$period[1] & sae_date <= input$period[2])
@@ -57,8 +49,6 @@ get_reactive_data <- function(input){
   ## Save reactive datafranes into list
   reactive_data <- list(
     rx_random = random_period,
-    rx_all = all_period
-    , rx_consistency = consistency_period
     rx_all = all_period,
     rx_sae = sae_period,
     rx_queries = queries_period
