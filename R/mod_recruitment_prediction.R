@@ -1,4 +1,3 @@
-# Test Muriel
 #' Recruitment prediction module
 #'
 #' Predicts when a trial will reach it's target recruitment, based on recruitment to date
