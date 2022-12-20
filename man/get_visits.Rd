@@ -9,9 +9,6 @@ get_visits(df)
 \arguments{
 \item{df}{}
 }
-\value{
-
-}
 \description{
 To generate visit data using randomization data
 }

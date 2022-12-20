@@ -11,9 +11,6 @@ get_links(customer = "CHI", project.id = 12396)
 
 \item{project.id}{The project id from secuTrial obtained from the Admin Tool}
 }
-\value{
-
-}
 \description{
 This function contains links to ..
 }

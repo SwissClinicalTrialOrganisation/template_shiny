@@ -6,9 +6,6 @@
 \usage{
 get_data()
 }
-\value{
-
-}
 \description{
 Load data
 }

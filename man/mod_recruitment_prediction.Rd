@@ -12,9 +12,7 @@ mod_recruitment_prediction_server(
   output,
   session,
   data.randomized,
-  locations,
-  study_params,
-  all_data
+  centers
 )
 }
 \arguments{
@@ -30,12 +28,11 @@ mod_recruitment_prediction_server(
 
 \item{data.randomized}{reactive data containing randomization info}
 
-\item{locations}{parameters on site level}
-
-\item{study_params}{general study parameter}
-
-\item{all_data}{non reactive data}
+\item{centers}{parameters on site level incl. overall (needed for gg_accrual_plot_predict with targets)}
 }
 \description{
 Predicts when a trial will reach it's target recruitment, based on recruitment to date
+}
+\author{
+Muriel Helmers
 }

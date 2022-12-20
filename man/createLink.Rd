@@ -9,9 +9,6 @@ createLink(url)
 \arguments{
 \item{url}{}
 }
-\value{
-
-}
 \description{
 Create hyperlink
 }

@@ -11,9 +11,6 @@ get_queries(index, df)
 
 \item{df}{}
 }
-\value{
-
-}
 \description{
 Get dataframe of queries
 }

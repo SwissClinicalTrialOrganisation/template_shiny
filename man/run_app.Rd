@@ -6,9 +6,6 @@
 \usage{
 run_app()
 }
-\value{
-
-}
 \description{
 Run the shiny app
 }
