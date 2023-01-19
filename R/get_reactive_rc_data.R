@@ -9,9 +9,6 @@
 get_reactive_rc_data <- function(data, input){
   
   random_period <- reactive({
-    message(" -> get_reactive_rc_data, data$randomized: ")
-    message(head(data$randomized))
-
     if(input$center != "All"){
       filter(data$randomized, centre.short == input$center & rando_date.date >= input$period[1] & rando_date.date <= input$period[2])
 
@@ -21,9 +18,6 @@ get_reactive_rc_data <- function(data, input){
   })
   
   elig_period <- reactive({
-    message(" -> get_reactive_rc_data, data$eligibility: ")
-    message(head(data$eligibility))
-
     if(input$center != "All"){
       filter(data$eligibility, centre.short == input$center & ic_date_date >= input$period[1] & ic_date_date <= input$period[2])
 
@@ -33,8 +27,6 @@ get_reactive_rc_data <- function(data, input){
   })
   
   locations_filtered <- reactive({
-    message(paste(" -> get_reactive_rc_data, data$centers_overall: ", data$centers_overall))
-    
     if(input$center != "All"){
       tmp <- filter(data$centers_overall, centre.short == input$center)
     } else {
