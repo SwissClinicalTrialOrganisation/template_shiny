@@ -269,8 +269,14 @@ get_rc_data <- function(){
   # Store the REDCap token first in your System Variables
   #########################################################
   # # store it in your .Renviron file
-  # usethis::edit_r_environ(REDCap_TOKEN_P733 = "D12830B536D17DCE249EDAF61A84C791")
+  # # ON WINDOWS:
+  # usethis::edit_r_environ(REDCap_TOKEN_P733 = "enter_token_here")
   # # You will now have a .Renviron file in C:\Users\<your user name>]\Documents\ that contains the token
+  # # ON LINUX:
+  # # open the .Renviron file interactively with 
+  # usethis::edit_r_environ()
+  # # Add the line REDCap_TOKEN_P733 = "enter_token_here" in the file. Save it.
+  # # BOTH SYSTEMS
   # # Restart R
   # # The token is now accessible through Sys.getenv('REDCap_TOKEN_P733')
    
