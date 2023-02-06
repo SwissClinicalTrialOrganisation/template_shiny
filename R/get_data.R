@@ -266,7 +266,16 @@ get_rc_data <- function(){
   ###                                                     LOAD REDCap DATA                                            ###
   #######################################################################################################################
 
-  token <- readLines("O:/tokens/733.txt")
+  # Store the REDCap token first in your System Variables
+  #########################################################
+  # # store it in your .Renviron file
+  # # open the .Renviron file interactively with 
+  # usethis::edit_r_environ()
+  # # Add the line REDCap_TOKEN_P733 = "enter_token_here" in the file. Save it.
+  # # Restart R
+  # # The token is now accessible through Sys.getenv('REDCap_TOKEN_P733')
+   
+  token <- Sys.getenv('REDCap_TOKEN_P733')
   url <- "https://redcap.ctu.unibe.ch/api/"
 
   meta <- redcap_export_meta(token = token, url = url, tabs = c("metadata", "event", "formEventMapping", "instrument", "dag", "user"))
