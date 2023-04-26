@@ -48,11 +48,7 @@ app_ui <- function() {
                         ## Overview tab
                         menuItem("Performance measures", startExpanded = TRUE,
                                  ## 1st SIDEBAR TAB: Recruitment and retention
-<<<<<<< HEAD
                                  menuItem("Recruitment", tabName = mod$recruit, icon = icon("chart-line")),
-=======
-                        #          menuItem("Recruitment", tabName = mod$recruit, icon = icon("chart-line")),
->>>>>>> 48d7f29e443a5330456f13c685e154cf3dc5cd68
                                  menuItem("Recruitment (accrualPlot)", tabName = mod$recruit2, icon = icon("chart-line"))
                         # ,
                         #          menuItem("Recruitment map", tabName = mod$recruitmap, icon = icon("map")),
@@ -94,11 +90,7 @@ app_ui <- function() {
 
                         ## Recruitment tab
                         mod_home_ui(mod$home, label = mod$home),
-<<<<<<< HEAD
                         mod_recruitment_ui(mod$recruit, label = mod$recruit),
-=======
-                        # mod_recruitment_ui(mod$recruit, label = mod$recruit),
->>>>>>> 48d7f29e443a5330456f13c685e154cf3dc5cd68
                         mod_recruitment2_ui(mod$recruit2, label = mod$recruit2)
                         # ,
                         # mod_recruitment_map_ui(mod$recruitmap, label = mod$recruitmap)

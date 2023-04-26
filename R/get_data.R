@@ -261,8 +261,6 @@ get_data <- function(){
 
 #' @importFrom redcaptools redcap_export_meta redcap_export_byform redcap_export_tbl rc_prep
 get_rc_data <- function(){
-<<<<<<< HEAD
-=======
 
   #######################################################################################################################
   ###                                                     LOAD REDCap DATA                                            ###
@@ -360,104 +358,7 @@ get_rc_data <- function(){
 
   return(data)
 }
->>>>>>> 48d7f29e443a5330456f13c685e154cf3dc5cd68
 
-  #######################################################################################################################
-  ###                                                     LOAD REDCap DATA                                            ###
-  #######################################################################################################################
-
-  # Store the REDCap token first in your System Variables
-  #########################################################
-  # # store it in your .Renviron file
-  # # open the .Renviron file interactively with 
-  # usethis::edit_r_environ()
-  # # Add the line REDCap_TOKEN_P733 = "enter_token_here" in the file. Save it.
-  # # Restart R
-  # # The token is now accessible through Sys.getenv('REDCap_TOKEN_P733')
-   
-  token <- Sys.getenv('REDCap_TOKEN_P733')
-  url <- "https://redcap.ctu.unibe.ch/api/"
-
-  meta <- redcap_export_meta(token = token, url = url, tabs = c("metadata", "event", "formEventMapping", "instrument", "dag", "user"))
-
-  # define center & study data using REDCap DAG ID----
-  study_params <- data.frame(acc_target = 150,
-                             acc_monthly = 11,
-                             target = 250,
-                             target_qol = 125,
-                             target_fu1 = 100,
-                             study_start = as.Date('2017/12/01'))
-
-  # workaround: get the link DAG - DAG_ID from DAGs in user df (will be fixed in REDCap version 13)
-  center_id <- meta[["user"]] %>%
-    select("centre.name" = "data_access_group", "centre.id" = "data_access_group_id") %>%
-    mutate(centre.id = as.character(centre.id)) %>%
-    unique()
-  center_id <- center_id[complete.cases(center_id), ]
-
-  centers <- meta[["dag"]] %>%
-    left_join(center_id, by = c("unique_group_name" = "centre.name")) %>%
-    rename(centre.short = data_access_group_name) %>%
-    rename(centre.name = unique_group_name) %>%
-    # rename(centre.id = data_access_group_id) %>%
-    arrange(centre.short) %>%
-    mutate(monthly = c(2,1,2,1,5)) %>%
-    mutate(target = c(25, 35, 30, 30, 30)) %>%
-    mutate(target_qol = c(20, 30, 25, 25, 25)) %>%
-    mutate(target_fu1 = c(15, 25, 20, 20, 20)) %>%
-    mutate(long = c(6.5848, 8.9857, 8.9632, 7.4688, 10.2411)) %>%
-    mutate(lat = c(46.5980, 46.0868, 47.1502, 47.3604, 46.6630))
-
-  rm(center_id)
-
-  centers_overall <- centers %>%
-    add_row(centre.short = "Overall",
-            centre.name = "overall",
-            centre.id = NA,
-            monthly = study_params$acc_monthly,
-            target = study_params$target,
-            target_qol = study_params$target_qol,
-            target_fu1 = study_params$target_fu1,
-            long = NA,
-            lat = NA)
-
-    # export by form (best for projects with a visit structure) ----
-  forms <- redcap_export_byform(token = token, url = url)
-  # add labels, make factors, etc (can be slow...)
-  forms_prepped <- sapply(forms, rc_prep, metadata = meta$metadata)
-
-  # add center ID to all forms in forms_prepped
-  forms_prepped <- sapply(forms_prepped,
-                                 function(x){
-                                   if(!is.null(x)){
-                                     x %>% mutate(dag = substr(record_id, 1, 4) ) %>%
-                                       left_join(centers, by = c("dag" = "centre.id"))
-                                   }
-                                   })
-
-  # rename to adjust to mock data
-  forms_prepped$randomization <- forms_prepped$randomization %>%
-    rename("rando_date.date" = rando_date_date)
-  names(forms_prepped)[2] <- "randomized"
-
-  # Option:
-  # export as single dataset (suitable for projects without a visit structure) ----
-  # records <- redcap_export_tbl(token = token, url = url, content = "record")
-  # add labels, make factors, etc (can be slow...)
-  # prepped <- rc_prep(records, meta$metadata)
-
-
-  #######################################################################################################################
-  ###                                                     SAVE REDCap DATA                                            ###
-  #######################################################################################################################
-
-  # return(forms/prepped + locations + study_params + centers)
-  tmp <- list(study_params, centers, centers_overall)
-  names(tmp) = c("study_params", "centers", "centers_overall")
-  data <- append(forms_prepped, tmp)
-
-  return(data)
-}
 
 # Get secuTrial data (preparation in secutrial_data.R) ----------------
 get_secu_data <- function(){

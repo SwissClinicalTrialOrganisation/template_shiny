@@ -40,11 +40,7 @@ mod_recruitment2_ui <- function(id, label){
           #   valueBoxOutput(ns("randomized"), width = 6),
           #   valueBoxOutput(ns("estimated"), width = 6)
           # ),
-<<<<<<< HEAD
-          # 
-=======
 
->>>>>>> 48d7f29e443a5330456f13c685e154cf3dc5cd68
           # uiOutput(ns("targetsUI")),
 
           fluidRow(
@@ -60,17 +56,14 @@ mod_recruitment2_ui <- function(id, label){
 
             )
           )
-<<<<<<< HEAD
       # ,
       #     tags$br(),
       #     tags$br(),
       #     fluidRow(gt::gt_output(ns('recruittable')))
-=======
           # ,
           # tags$br(),
           # tags$br(),
           # fluidRow(gt::gt_output(ns('recruittable')))
->>>>>>> 48d7f29e443a5330456f13c685e154cf3dc5cd68
   )
 }
 
@@ -98,22 +91,13 @@ mod_recruitment2_server <- function(input, output, session, data.randomized, loc
   #   valueBox(value = paste0(nrow(data.randomized()), " out of ", 300, " (", perc, "%)" ),
   #            subtitle = "actual out of estimated recruitment", icon = icon("user-plus"), color = "yellow")
   # })
-<<<<<<< HEAD
-# 
-=======
 
->>>>>>> 48d7f29e443a5330456f13c685e154cf3dc5cd68
   acc <- reactive({
     accrualPlot::accrual_create_df(data.randomized()$rando_date.date,
                                    by = data.randomized()$centre.short)
   })
-<<<<<<< HEAD
 #   acc2 <- accrualPlot::accrual_create_df(all_data$rando_date.date,
 #                                    by = all_data$centre.short)
-=======
-  # acc2 <- accrualPlot::accrual_create_df(all_data$rando_date.date,
-  #                                  by = all_data$centre.short)
->>>>>>> 48d7f29e443a5330456f13c685e154cf3dc5cd68
 
 
   ## Recruitment plot
@@ -130,11 +114,6 @@ mod_recruitment2_server <- function(input, output, session, data.randomized, loc
   #   gt::gt(accrualPlot::accrual_table(acc(), unit = "month", format_table_date = "%b %Y")) %>%
   #     gt::tab_options(column_labels.hidden = TRUE)
   # })
-<<<<<<< HEAD
-  # 
-=======
-
->>>>>>> 48d7f29e443a5330456f13c685e154cf3dc5cd68
   # # recruitment targets
   # targets <- locations %>%
   #   dplyr::filter(centre.short %in% names(acc2))
