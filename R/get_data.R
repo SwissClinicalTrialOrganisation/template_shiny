@@ -288,18 +288,10 @@ get_rc_data <- function(){
                              target_fu1 = 100,
                              study_start = as.Date('2017/12/01'))
 
-  # workaround: get the link DAG - DAG_ID from DAGs in user df (will be fixed in REDCap version 13)
-  center_id <- meta[["user"]] %>%
-    select("centre.name" = "data_access_group", "centre.id" = "data_access_group_id") %>%
-    mutate(centre.id = as.character(centre.id)) %>%
-    unique()
-  center_id <- center_id[complete.cases(center_id), ]
-
   centers <- meta[["dag"]] %>%
-    left_join(center_id, by = c("unique_group_name" = "centre.name")) %>%
-    rename(centre.short = data_access_group_name) %>%
-    rename(centre.name = unique_group_name) %>%
-    # rename(centre.id = data_access_group_id) %>%
+    rename(centre.id = data_access_group_id,
+           centre.short = data_access_group_name,
+           centre.name = unique_group_name) %>%
     arrange(centre.short) %>%
     mutate(monthly = c(2,1,2,1,5)) %>%
     mutate(target = c(25, 35, 30, 30, 30)) %>%
@@ -308,8 +300,7 @@ get_rc_data <- function(){
     mutate(long = c(6.5848, 8.9857, 8.9632, 7.4688, 10.2411)) %>%
     mutate(lat = c(46.5980, 46.0868, 47.1502, 47.3604, 46.6630))
 
-  rm(center_id)
-
+  # add an overall row
   centers_overall <- centers %>%
     add_row(centre.short = "Overall",
             centre.name = "overall",
@@ -321,26 +312,30 @@ get_rc_data <- function(){
             long = NA,
             lat = NA)
 
-    # export by form (best for projects with a visit structure) ----
+  # export by form
   forms <- redcap_export_byform(token = token, url = url)
-  # add labels, make factors, etc (can be slow...)
+  # add labels, make factors, etc 
   forms_prepped <- sapply(forms, rc_prep, metadata = meta$metadata)
 
-  # add center ID to all forms in forms_prepped
+  # add center info to all forms in forms_prepped
   forms_prepped <- sapply(forms_prepped,
                                  function(x){
                                    if(!is.null(x)){
-                                     x %>% mutate(dag = substr(record_id, 1, 4) ) %>%
+                                     x %>% mutate(dag = as.integer(substr(record_id, 1, 4)) ) %>%
                                        left_join(centers, by = c("dag" = "centre.id"))
                                    }
                                    })
 
-  # rename to adjust to mock data
-  forms_prepped$randomization <- forms_prepped$randomization %>%
-    rename("rando_date.date" = rando_date_date)
-  names(forms_prepped)[2] <- "randomized"
-
-  # Option:
+  # create a randomized df same as with mock data
+  randomized_rc <- forms_prepped$randomization %>% 
+    select(pat_id = record_id
+           , centre.short
+           , rando_date.date = rando_date_date) %>% 
+    filter(!is.na(centre.short))
+  # remove all records without linkage to centre.short
+  # randomized_rc <- randomized_rc[!is.na(randomized_rc$centre.short), ]
+  
+    # Option:
   # export as single dataset (suitable for projects without a visit structure) ----
   # records <- redcap_export_tbl(token = token, url = url, content = "record")
   # add labels, make factors, etc (can be slow...)
@@ -352,10 +347,13 @@ get_rc_data <- function(){
   #######################################################################################################################
 
   # return(forms/prepped + locations + study_params + centers)
-  tmp <- list(study_params, centers, centers_overall)
-  names(tmp) = c("study_params", "centers", "centers_overall")
-  data <- append(forms_prepped, tmp)
-
+  data <- list(
+    data.extraction.date = Sys.Date(),
+    randomized = randomized_rc,
+    study_params = study_params, 
+    centers,
+    centers_overall)
+  
   return(data)
 }
 

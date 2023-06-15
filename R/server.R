@@ -9,6 +9,7 @@ app_server <- function(input, output, session ) {
   
   # Define src that should be used for data
   src <- "secutrial"
+  src <- "redcap"
   
   ## Get all module names
   mod <- get_modules()
