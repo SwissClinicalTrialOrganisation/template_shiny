@@ -20,3 +20,5 @@ Imports:
     shinydashboard
 Remotes:
     CTU-Bern/redcaptools
+Depends: 
+    R (>= 2.10)

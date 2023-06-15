@@ -56,6 +56,10 @@ mod_recruitment2_ui <- function(id, label){
 
             )
           )
+      # ,
+      #     tags$br(),
+      #     tags$br(),
+      #     fluidRow(gt::gt_output(ns('recruittable')))
           # ,
           # tags$br(),
           # tags$br(),
@@ -92,8 +96,8 @@ mod_recruitment2_server <- function(input, output, session, data.randomized, loc
     accrualPlot::accrual_create_df(data.randomized()$rando_date.date,
                                    by = data.randomized()$centre.short)
   })
-  # acc2 <- accrualPlot::accrual_create_df(all_data$rando_date.date,
-  #                                  by = all_data$centre.short)
+#   acc2 <- accrualPlot::accrual_create_df(all_data$rando_date.date,
+#                                    by = all_data$centre.short)
 
 
   ## Recruitment plot
@@ -110,7 +114,6 @@ mod_recruitment2_server <- function(input, output, session, data.randomized, loc
   #   gt::gt(accrualPlot::accrual_table(acc(), unit = "month", format_table_date = "%b %Y")) %>%
   #     gt::tab_options(column_labels.hidden = TRUE)
   # })
-
   # # recruitment targets
   # targets <- locations %>%
   #   dplyr::filter(centre.short %in% names(acc2))
