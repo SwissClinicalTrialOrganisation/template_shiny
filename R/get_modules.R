@@ -26,6 +26,7 @@ get_modules <- function(){
     participant = "mod_participant",
     safetymgm = "mod_safetymgm",
     sae = "mod_sae",
+    sae_st = "mod_sae_st",
     ae = "mod_ae",
     asr = "mod_asr"
   )

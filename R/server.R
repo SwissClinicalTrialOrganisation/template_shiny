@@ -48,6 +48,7 @@ app_server <- function(input, output, session ) {
   callModule(mod_visits_server, mod$visits, data)
   callModule(mod_participant_server, mod$participant, data)
   callModule(mod_sae_server, mod$sae, rx.data$rx_sae, data$sae, auth=res_auth)
+  callModule(mod_sae_st_server, mod$sae_st, rx.data$rx_sae, data$sae, data$ae_st, data$sae_st, auth=res_auth) #new
   callModule(mod_ae_server, mod$ae, data, auth=res_auth)
   callModule(mod_asr_server, mod$asr, data)
 

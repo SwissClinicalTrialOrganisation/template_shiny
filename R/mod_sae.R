@@ -1,7 +1,10 @@
 #' Serious Adverse Events
 #'
 #' In development 
-#' @author Laurent Brodier
+#' This module is intended to get an overview of of the safety data. 
+#' 
+#' 
+#' @author Laurent Brodier (Laurent.Brodier@hug.ch)
 #' @import ggplot2
 #' @import plotly
 #' @import reshape2
@@ -10,21 +13,36 @@
 #' @rdname mod_sae
 #' @param id standard shiny id argument
 #' @param label standard shiny label argument
+
 mod_sae_ui <- function(id, label){
+  #initialize namespace
   ns <- NS(id)
+  
+  # Generate the SAE module UI
   tabItem(tabName = label,
+          # A tabset panel containing a loading screen, and an authorized and unauthorized tab depending on user rights
           tabsetPanel(id = ns("switcher"), type="hidden", 
+                      # Loading screen while SAE server is loading
+                      # Once server is loaded, it will switch to authorized or unauthorized tab depending on user rights
                       tabPanelBody("loading", icon('transfer', lib = 'glyphicon'), HTML('&nbsp;&nbsp;'), "loading... ", ),
+                      
+                      #Basic UI with a message when user is not authorized to access this module
                       tabPanelBody("not_authorized", icon("lock", "fa-2x"), HTML('&nbsp;&nbsp;'), "You are not authorized to access this module."), 
+                      
+                      # The main module UI, active once the user is authorized
                       tabPanelBody("authorized", 
                                     fluidRow(
-                                      # SAE filters (for all tabs)
+                                      # SAE filters (applicable for all tabs) are used to filter the SAE based on their caracteristics
+                                      # for example, you may want to filter for unexpected SAE with causality certain, probable or possible (=SUSARs)
                                       box(width = 12,
-                                        #Filters choices are generated on server side, based on dataset content
+                                        # Filters choices are generated on server side, based on dataset content
                                         fluidRow( 
                                           p(style="padding-left:15px", "Filter SAE by characteristics: delete those that do not apply."),
+                                          # Filter by report type (e.g. initial / final / follow-up)
                                           column(4, uiOutput(ns("sae_filter_report_type_ui"))), 
+                                          #Filter by serverity (e.g. Mild / Moderate / Severe)
                                           column(4, uiOutput(ns("sae_filter_severity_ui"))),
+                                          #Filter by expectedness (e.g. Expected / Unexpected)
                                           column(4, uiOutput(ns("sae_filter_expectedness_ui")))
                                         ),
                                         fluidRow( 
@@ -57,41 +75,7 @@ mod_sae_ui <- function(id, label){
                                              tabPanel(width=12, "SAE list",
                                                       h2("SAE list:"),
                                                       div(DT::dataTableOutput(ns("sae_table_1")), style = "font-size: 90%; width: 100%")
-                                                      ),
-                                             tabPanel(width=12, "AE/SAE distribution",
-                                                      p("in devel... first preview with non reactive sT data"),
-                                                      fluidRow(
-                                                        column(12, h3("Histogram of the number of events (AE+SAE) by patient"), plotlyOutput(ns("sae_histogram_1")))
-                                                      ),
-                                                      fluidRow(
-                                                        column(6, h3("Histogram of the nb of AE"), plotlyOutput(ns("sae_histogram_2"))),
-                                                        column(6, h3("Histogram of the nb of SAE:"), plotlyOutput(ns("sae_histogram_3")))
-                                                      ),
-                                                      fluidRow(
-                                                        column(6, h3("Number of events by patient (violin)"), plotlyOutput(ns("sae_violin_1"))),
-                                                        column(6, h3("Number of events by patient (boxplot)"), plotlyOutput(ns("sae_boxplot_1")))
-                                                      ),
-                                                      fluidRow(
-                                                        column(12, h3("Table of the number of events by patient"), tableOutput(ns("sae_nb_table")))
                                                       )
-                                             ),
-                                             tabPanel(width=12, "AE/SAE follow-up",
-                                                      p("in devel... first preview with non reactive sT data"),
-                                                      fluidRow(
-                                                        column(12, h3("Histogram of the number of FU (AE+SAE FU) by event"), plotlyOutput(ns("sae_fu_histogram_1")))
-                                                      ),
-                                                      fluidRow(
-                                                        column(6, h3("Histogram of the nb of AE FU by event"), plotlyOutput(ns("sae_fu_histogram_2"))),
-                                                        column(6, h3("Histogram of the nb of SAE FU by event:"), plotlyOutput(ns("sae_fu_histogram_3")))
-                                                      ),
-                                                      fluidRow(
-                                                        column(6, h3("SAE follow-up (violin)"), plotlyOutput(ns("sae_fu_violin_2"))),
-                                                        column(6, h3("SAE follow-up (boxplot)"), plotlyOutput(ns("sae_fu_boxplot_2")))
-                                                      ), 
-                                                      fluidRow(
-                                                        column(12, h3("Table of the number SAE follow-up"), tableOutput(ns("sae_fu_table")))
-                                                      )
-                                             )
                                       )
                                     )
                                   )
@@ -107,11 +91,21 @@ mod_sae_ui <- function(id, label){
 mod_sae_server <- function(input, output, session, data.sae, data.sae.static, auth){
   ns <- session$ns
   
-  #### test login ####
+  # Get login information for the logged user from from the input parameter 'auth'
   access_granted = reactive({
-    return(auth$access_sae)
+    # TODO set the conditions for a user to get access to the module
+    # e.g. you can use a role name or a specific variable for the module (defined in credentials.R)
+    if(is.null(auth$access_sae) | is.null(auth$role)){
+      return(NULL)
+    }else if(auth$access_sae == TRUE | auth$role %in% c("admin", "user")){
+      return(TRUE)
+    }else{
+      return(FALSE)
+    }
   })
-  #switch tabsetpanel depending on user rights for the module
+
+  # Shows the tabset panel with the module UI if the user is authorized to access 
+  # this module, or a tabset panel with a non-authorized message if the user is not authorized. 
   observe({
     req(access_granted())
     if(access_granted())
@@ -121,26 +115,28 @@ mod_sae_server <- function(input, output, session, data.sae, data.sae.static, au
     }
   })
 
-  
-  ## Parameters to edit (adapting module to different datasets)
-  # varname mapping - to map to your dataset variable names
-  record_id <- "pat_id"
+  # TODO map the variable below to the corresponding variable names in your dataset
+  record_id <- "pat_id" # unique ID of the participant
   sae_id = "sae_id" #NEW
   sae_gp_id = "sae_gp_id" #NEW
-  center <- "centre.short"
-  sae_date <- "sae_date"
-  sae_report_type <- "sae_report_type"
-  severity_level <- "severity_level"
-  expectedness <- "expectedness"
-  causality <- "causality"
-  outcome <- "outcome"
-  # SAE variables (factors) to use in selectInput for categories
+  center <- "centre.short" # center or data access group of participant
+  sae_date <- "sae_date" # date of the SAE
+  sae_report_type <- "sae_report_type" # type of SAE report (e.g. initial / follow-up / final)
+  severity_level <- "severity_level" # severity level of the SAE (e.g. mild / moderate / severe)
+  expectedness <- "expectedness" # expectedness of the SAE (e.g. expected / unexpected)
+  causality <- "causality" # causality of the SAE (e.g. certain / probable / possible / inlikely / not related / not assessable)
+  outcome <- "outcome" # outcome of the SAE (e.g. death / ongoing / resolved without sequelae / resolved with sequelae / other)
+ 
+  # TODO list here the SAE variables that are factors, they will be available in 
+  # the select inputs as categories
   sae_vars <- c("severity_level", "causality", "expectedness", "outcome", "death", 
                 "life_threatening", "persistant_disability", "hospitalization", 
                 "congenital_anomalia_birth_defect", "sae_report_type", "centre.short") 
   
-  #variable names and choices translation
-  #var.transl <- NULL #keep NULL to use variables names in the dataset
+  # TODO (optional) You can specify below custom labels to be displayed in place 
+  # of the default variable names from your dataset. 
+  # To use default names you can uncomment the line below and comment the two following lines. 
+  #var.transl <- NULL #uncomment this line to use default variables names
   var.transl <- c("pat_id" = "Patient ID", 
                   "sae_date" = "SAE date", 
                   "sae_description" = "Description of SAE", 
@@ -157,7 +153,8 @@ mod_sae_server <- function(input, output, session, data.sae, data.sae.static, au
                   "centre.short" = "Center") #A more user friendly way to input data (?)
   var.transl <- data.frame(original = names(var.transl), new = var.transl)
   
-  ## reactive filtered data based on SAE characteristics, used in plots below
+  
+  ## reactive filtered data - filtered based on SAE characteristics (this variable is used in plots)
   data.sae.filtered <- reactive({
     #wait for input to be created
     req(input$sae_filter_severity, 
@@ -165,7 +162,7 @@ mod_sae_server <- function(input, output, session, data.sae, data.sae.static, au
         input$sae_filter_causality, 
         input$sae_filter_expectedness, 
         input$sae_filter_report_type, quietly = T) 
-    #filter data based on sae filters
+    #filter data based on SAE filters in UI
     d <- data.sae() #get input data
     d <- d[d[,severity_level] %in% input$sae_filter_severity,]
     d <- d[d[,outcome] %in% input$sae_filter_outcome,]
@@ -437,214 +434,5 @@ mod_sae_server <- function(input, output, session, data.sae, data.sae.static, au
                 label = "Color by SAE characteristics:",  
                 choices = choices, multiple = F, 
                 selected = "None") 
-  })
-  
-  #### new tab(s) 2023 ####
-    # TODO # replace later with data passed to module
-  ae_path_st <- "s_export_CSV_DEVL8_20230320-145336/ae.csv"
-  sae_path_st <- "s_export_CSV_DEVL8_20230320-145336/sae.csv"
-  color_aesae <- 'royalblue'
-  color_ae <- 'mediumseagreen'
-  color_sae <- 'tomato'
-  
-  #nb event by patient - require AE + SAE datasets from sT
-  nb_event_by_patient <- reactive({
-    # read export from sT for AE and SAE
-    # TODO # replace later with data passed to module
-    ae <- read.delim(ae_path_st, header = T, sep = ",")
-    sae <- read.delim(sae_path_st, header = T, sep = ",")
-    
-    # get nb of events + nb of AE + nb of SAE by patient
-    nb_event_by_patient_ae <- aggregate(data = ae, ae$mnpaeid ~ mnpaid, FUN = function(x){length(unique(x))})
-    nb_event_by_patient_sae <- aggregate(data = sae, sae$mnpaeid ~ mnpaid, FUN = function(x){length(unique(x))})               
-    nb_event_by_patient <- merge(nb_event_by_patient_ae, nb_event_by_patient_sae, by = "mnpaid", all = T)
-    names(nb_event_by_patient) <- c("mnpaid", "nb.event", "nb.sae")
-    nb_event_by_patient$nb.ae = nb_event_by_patient$nb.event - nb_event_by_patient$nb.sae
-    rm(nb_event_by_patient_ae, nb_event_by_patient_sae)
-    
-    # TODO # get a patient list somehow and add 0 for all not in the list
-    patients_list <- c("TEST-0001", "TEST-0002", "TEST-0003", "TEST-0004", "TEST-0005", 
-                       "TEST-0006", "TEST-0007", "TEST-0008")
-    tmp <- data.frame(mnpaid = patients_list[!patients_list %in% nb_event_by_patient$mnpaid], 
-                      nb.event = 0, nb.sae = 0, nb.ae=0)
-    # merge and reorder columns
-    nb_event_by_patient <- rbind(nb_event_by_patient, tmp)
-    nb_event_by_patient <- nb_event_by_patient[,c(1:2, 4, 3)]
-    nb_event_by_patient$nb.event <- as.integer(nb_event_by_patient$nb.event)
-    nb_event_by_patient$nb.ae <- as.integer(nb_event_by_patient$nb.ae)
-    nb_event_by_patient$nb.sae <- as.integer(nb_event_by_patient$nb.sae)
-    rm(tmp)
-    return(nb_event_by_patient)
-  })
-  nb_event_by_patient_melt <- reactive({
-    # prepare data for violin plots of nb events
-    m <- melt(nb_event_by_patient(), id.vars = "mnpaid")
-    names(m) <- c("mnpaid", "aesae", "count")
-    # set readable labels for plots
-    m$label <- factor(sapply(m$aesae, function(x){if(x=="nb.event"){"AE + SAE"}else if(x=="nb.ae"){"AE"}else if(x=="nb.sae"){"SAE"}else{x}}), levels = c("AE + SAE", "AE", "SAE"))
-    return(m)
-  })
-  
-  #nb fu by patient and by event (mnpaeid)
-  nb_fu_by_aeid <- reactive({
-    # read export from sT for AE and SAE
-    # TODO # replace later with data passed to module
-    ae <- read.delim(ae_path_st, header = T, sep = ",")
-    sae <- read.delim(sae_path_st, header = T, sep = ",")
-    
-    nb_fu_by_aeid_ae <- aggregate(data=ae, mnpaefuid ~ mnpaeid * mnpaid, length)
-    nb_fu_by_aeid_sae <- aggregate(data=sae, mnpaefuid ~ mnpaeid, length)
-    nb_fu_by_aeid <- merge(nb_fu_by_aeid_ae, nb_fu_by_aeid_sae, by = "mnpaeid", suffixes = c(".event", ".sae"), all = T)
-    nb_fu_by_aeid[is.na(nb_fu_by_aeid)] <- 0
-    nb_fu_by_aeid$mnpaefuid.ae <- nb_fu_by_aeid$mnpaefuid.event - nb_fu_by_aeid$mnpaefuid.sae
-    rm(nb_fu_by_aeid_ae, nb_fu_by_aeid_sae)
-    nb_fu_by_aeid <- nb_fu_by_aeid[, c(1:3, 5, 4)]
-    names(nb_fu_by_aeid)[3:5] <- c("nb.event", "nb.ae", "nb.sae")
-    nb_fu_by_aeid$nb.ae <- as.integer(nb_fu_by_aeid$nb.ae)
-    nb_fu_by_aeid$nb.sae <- as.integer(nb_fu_by_aeid$nb.sae)
-    return(nb_fu_by_aeid)
-  })
-  nb_fu_by_aeid_melt <- reactive({
-    m_nbfu <- melt(nb_fu_by_aeid(), id.vars = c("mnpaeid", "mnpaid"))
-    names(m_nbfu)[3:4] <- c("aesae", "count")
-    m_nbfu$label <- factor(sapply(m_nbfu$aesae, function(x){if(x=="nb.event"){"AE + SAE"}else if(x=="nb.ae"){"AE"}else if(x=="nb.sae"){"SAE"}else{x}}), levels = c("AE + SAE", "AE", "SAE"))
-    return(m_nbfu)
-  })
-  
-  #plots histogram distribution
-  output$sae_histogram_1 <- renderPlotly({
-    g <- ggplot(data=nb_event_by_patient_melt()[nb_event_by_patient_melt()$aesae == 'nb.event',]) + 
-      geom_histogram(aes(x=count), fill=color_aesae, binwidth = 0.5) +
-      theme_bw() + labs(x="nb of events (AE+SAE)", y="nb of patients") + 
-      scale_y_continuous(breaks = seq(0, sum(nb_event_by_patient_melt()$count), by = 1), minor_breaks = 0) +
-      scale_x_continuous(breaks = seq(0, sum(nb_event_by_patient_melt()$count), by = 1), minor_breaks = 0)
-    ggplotly(g, tooltip = NULL)
-  })
-  output$sae_histogram_2 <- renderPlotly({
-    g <- ggplot(data=nb_event_by_patient_melt()[nb_event_by_patient_melt()$aesae == 'nb.ae',]) + 
-      geom_histogram(aes(x=count), fill=color_ae, binwidth = 0.5) +
-      theme_bw() + labs(x="nb of AE", y="nb of patients") + 
-      scale_y_continuous(breaks = seq(0, sum(nb_event_by_patient_melt()$count), by = 1), minor_breaks = 0) +
-      scale_x_continuous(breaks = seq(0, sum(nb_event_by_patient_melt()$count), by = 1), minor_breaks = 0)
-    ggplotly(g, tooltip = NULL)
-  })
-  output$sae_histogram_3 <- renderPlotly({
-    g <- ggplot(data=nb_event_by_patient_melt()[nb_event_by_patient_melt()$aesae == 'nb.sae',]) + 
-      geom_histogram(aes(x=count), fill=color_sae, binwidth = 0.5) +
-      theme_bw() + labs(x="nb of SAE", y="nb of patients") + 
-      scale_y_continuous(breaks = seq(0, sum(nb_event_by_patient_melt()$count), by = 1), minor_breaks = 0) +
-      scale_x_continuous(breaks = seq(0, sum(nb_event_by_patient_melt()$count), by = 1), minor_breaks = 0)
-    ggplotly(g, tooltip = NULL)
-  })
-  #plots violin + boxplot distribution
-  output$sae_violin_1 <- renderPlotly({
-    g <- ggplot(data=nb_event_by_patient_melt(), aes(x=label, y=count, color=label, fill=label)) + 
-      geom_violin(alpha=0.1) + 
-      geom_jitter(aes(text=paste0(mnpaid, "<br>", label, ": ", count)), 
-                  height = 0.05, width=0.2, alpha=0.5, size=1.5) + 
-      scale_color_manual(name="event type", values=c("AE + SAE"=color_aesae, "AE"=color_ae, "SAE"=color_sae)) +
-      scale_fill_manual(name="event type", values=c("AE + SAE"=color_aesae, "AE"=color_ae, "SAE"=color_sae)) +
-      theme_bw() + labs(x="event type", y="count")
-    
-      p <- ggplotly(g, tooltip = "text")
-      # dirty way to remove legend/hover on ggplotly object... 
-      for (i in 1:length(p$x$data)){
-        if(p$x$data[[i]]$mode == "markers"){
-          # remove legend for points (only if color/fill not in inherited aesthetics)
-          p$x$data[[i]]$text <- c(p$x$data[[i]]$text, "") 
-          p$x$data[[i]]$showlegend <- FALSE
-        }else if(p$x$data[[i]]$mode == "lines"){
-          p$x$data[[i]]$hoverinfo = "none" # remove density hover
-        }
-      }
-      return(p)
-  })
-  output$sae_boxplot_1 <- renderPlotly({
-    g <- ggplot(data=nb_event_by_patient_melt(), aes(x=label, y=count, color=label, fill=label)) + 
-      geom_boxplot(color="gray", fill=NA, alpha=0.1) + 
-      geom_jitter(aes(text=paste0(mnpaid, "<br>", label, ": ", count)), 
-                  height = 0.05, width=0.2, alpha=0.5, size=1.5) + 
-      scale_color_manual(name="event type", values=c("AE + SAE"=color_aesae, "AE"=color_ae, "SAE"=color_sae)) +
-      scale_fill_manual(name="event type", values=c("AE + SAE"=color_aesae, "AE"=color_ae, "SAE"=color_sae)) +
-      theme_bw() + labs(x="event type", y="count")
-    
-    p <- ggplotly(g, tooltip = "text")
-    # dirty way to remove legend/hover on ggplotly object... 
-    for (i in 1:length(p$x$data)){
-      if(p$x$data[[i]]$type == "box"){
-        #p$x$data[[i]]$hoverinfo = "none" # remove boxplot hover
-        #p$x$data[[i]]$showlegend <- FALSE #remove legend for boxplot
-      }
-    }
-    return(p)
-  })
-  output$sae_nb_table <- renderTable({
-    return(nb_event_by_patient())
-  })
-  #plots histogram FU
-  output$sae_fu_histogram_1 <- renderPlotly({
-    g <- ggplot(data=nb_fu_by_aeid_melt()[nb_fu_by_aeid_melt()$aesae == 'nb.event',]) + 
-      geom_histogram(aes(x=count), fill=color_aesae, binwidth = 0.5) +
-      theme_bw() + labs(x="nb of AE+SAE follow-ups", y="nb of events") + 
-      scale_y_continuous(breaks = seq(0, sum(nb_fu_by_aeid_melt()$count), by = 1), minor_breaks = 0) +
-      scale_x_continuous(breaks = seq(0, sum(nb_fu_by_aeid_melt()$count), by = 1), minor_breaks = 0)
-    ggplotly(g, tooltip = NULL)
-  })
-  output$sae_fu_histogram_2 <- renderPlotly({
-    g <- ggplot(data=nb_fu_by_aeid_melt()[nb_fu_by_aeid_melt()$aesae == 'nb.ae',]) + 
-      geom_histogram(aes(x=count), fill=color_ae, binwidth = 0.5) +
-      theme_bw() + labs(x="nb of AE follow-ups", y="nb of events") + 
-      scale_y_continuous(breaks = seq(0, sum(nb_fu_by_aeid_melt()$count), by = 1), minor_breaks = 0) +
-      scale_x_continuous(breaks = seq(0, sum(nb_fu_by_aeid_melt()$count), by = 1), minor_breaks = 0)
-    ggplotly(g, tooltip = NULL)
-  })
-  output$sae_fu_histogram_3 <- renderPlotly({
-    g <- ggplot(data=nb_fu_by_aeid_melt()[nb_fu_by_aeid_melt()$aesae == 'nb.sae',]) + 
-      geom_histogram(aes(x=count), fill=color_sae, binwidth = 0.5) +
-      theme_bw() + labs(x="nb of SAE follow-ups", y="nb of events") + 
-      scale_y_continuous(breaks = seq(0, sum(nb_fu_by_aeid_melt()$count), by = 1), minor_breaks = 0) +
-      scale_x_continuous(breaks = seq(0, sum(nb_fu_by_aeid_melt()$count), by = 1), minor_breaks = 0)
-    ggplotly(g, tooltip = NULL)
-  })
-  #plots violin + boxplot FU
-  output$sae_fu_violin_2 <- renderPlotly({
-    g <- ggplot(data=nb_fu_by_aeid_melt(), aes(x=label, y=count, color=label, fill=label)) + 
-      geom_jitter(aes(color=label, text=paste0("Patient ID: ", mnpaid, "<br>AE ID: ", mnpaeid, "<br>nb follow-up: ", count)), 
-                  width=0.2, height=0.05, alpha=0.5) + 
-      geom_violin(alpha=0.1) +
-      labs(x = "event type", y="nb follow-up", color="event type", fill="event type") +
-      scale_color_manual(values=c("AE + SAE" = color_aesae, "AE" = color_ae, "SAE" = color_sae))+
-      scale_fill_manual(values=c("AE + SAE" = color_aesae, "AE" = color_ae, "SAE" = color_sae))+
-      scale_y_continuous(breaks = seq(0, max(nb_fu_by_aeid_melt()$count, na.rm = T), by=1), minor_breaks = 0, limits = c(0, NA)) + 
-      theme_bw()
-    p <- ggplotly(g, tooltip = "text")
-    for (i in 1:length(p$x$data)){
-      if(p$x$data[[i]]$mode == "lines"){
-        p$x$data[[i]]$hoverinfo = "none" # remove density hover
-      }
-    }
-    return(p)
-  })
-  output$sae_fu_boxplot_2 <- renderPlotly({
-    g <- ggplot(data=nb_fu_by_aeid_melt(), aes(x=label, y=count, color=label, fill=label)) + 
-      geom_jitter(aes(color=label, text=paste0("Patient ID: ", mnpaid, "<br>AE ID: ", mnpaeid, "<br>nb follow-up: ", count)), 
-                  width=0.2, height=0.05, alpha=0.5) + 
-      geom_boxplot(color="gray", fill=NA, alpha=0.1) +
-      labs(x = "event type", y="nb follow-up", color="event type", fill="event type") +
-      scale_color_manual(values=c("AE + SAE" = color_aesae, "AE" = color_ae, "SAE" = color_sae))+
-      scale_fill_manual(values=c("AE + SAE" = color_aesae, "AE" = color_ae, "SAE" = color_sae))+
-      scale_y_continuous(breaks = seq(0, max(nb_fu_by_aeid_melt()$count, na.rm = T), by=1), minor_breaks = 0, limits = c(0, NA)) + 
-      theme_bw()
-    p <- ggplotly(g, tooltip = "text")
-    for (i in 1:length(p$x$data)){
-      if(p$x$data[[i]]$type == "box"){
-        #p$x$data[[i]]$hoverinfo = "none" # remove boxplot hover
-        #p$x$data[[i]]$showlegend <- FALSE #remove legend for boxplot
-      }
-    }
-    return(p)
-  })
-  output$sae_fu_table <- renderTable({
-    return(nb_fu_by_aeid())
   })
 }

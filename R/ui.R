@@ -64,6 +64,7 @@ app_ui <- function(request) {
                                  menuItem("Participant characteristics", tabName = mod$participant, icon = icon("address-card"), badgeLabel = "Upcoming", badgeColor = "green"),
                                  menuItem("Safety management", startExpanded = TRUE, icon = icon("notes-medical"),
                                           menuItem("Serious adverse events", tabName = mod$sae),
+                                          menuItem("Serious adverse events (sT)", tabName = mod$sae_st),
                                           menuItem("Adverse events", tabName = mod$ae, badgeLabel = "Upcoming", badgeColor = "green"),
                                           menuItem("Annual safety report", tabName = mod$asr, badgeLabel = "Upcoming", badgeColor = "green")
 
@@ -101,6 +102,7 @@ app_ui <- function(request) {
                         , mod_visits_ui(mod$visits, label = mod$visits)
                         , mod_participant_ui(mod$participant, label = mod$participant)
                         , mod_sae_ui(mod$sae, label = mod$sae)
+                        , mod_sae_st_ui(mod$sae_st, label = mod$sae_st)
                         , mod_ae_ui(mod$ae, label = mod$ae)
                         , mod_asr_ui(mod$asr, label = mod$asr)
 

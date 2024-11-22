@@ -178,8 +178,8 @@ get_data <- function(){
                         target_qol = c(20, 30, 25, 25, 25, 125),
                         target_fu1 = c(15, 25, 20, 20, 20, 100))
   
-  
-  sae_descr <- c("headache", "Headache", "Cancer", "Allergic reaction") # ?
+  #data for SAE (REDCap)
+  sae_descr <- c("headache", "Headache", "Cancer", "Allergic reaction") 
   sae <- data.frame(pat_id = sample(randomized$pat_id, 50, replace = T),
                     
                     sae_date = sample(seq(as.Date('2017/12/01'), as.Date('2022/03/01'), by="day"), 50), 
@@ -193,8 +193,15 @@ get_data <- function(){
                     hospitalization = sample(c("Yes", "No"), 50, T),
                     congenital_anomalia_birth_defect = sample(c("Yes", "No"), 50, T), 
                     sae_report_type = sample(c("Initial", "Follow-up", "Final"), 50, replace = T), 
-                    sae_description = sample(sae_descr, 50, replace = T)) #?
+                    sae_description = sample(sae_descr, 50, replace = T)) 
   sae$centre.short <- sapply(sae$pat_id, function(x){randomized$centre.short[randomized$pat_id == x]})
+  
+  #data for SAE (secuTrial)
+  ae_path_st <- "s_export_CSV_DEVL8_20230320-145336/ae.csv"
+  sae_path_st <- "s_export_CSV_DEVL8_20230320-145336/sae.csv"
+  ae_st <- read.delim(ae_path_st, header = T, sep = ",")
+  sae_st <- read.delim(sae_path_st, header = T, sep = ",")
+  
   
   consistency <- randomized %>% 
     mutate(height = rnorm(nrow(randomized), 170, 30),
@@ -329,7 +336,9 @@ get_data <- function(){
     centers = centers,
     study_params = study_params,
     consistency = consistency, 
-    sae = sae
+    sae = sae,
+    ae_st = ae_st,
+    sae_st = sae_st
   )
   
   return(data)
