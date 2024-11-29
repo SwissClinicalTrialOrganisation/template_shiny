@@ -10,7 +10,7 @@
 #' @import reshape2
 #' @import DT
 #' 
-#' @rdname mod_sae
+#' @rdname mod_sae_st
 #' @param id standard shiny id argument
 #' @param label standard shiny label argument
 
@@ -37,17 +37,18 @@ mod_sae_st_ui <- function(id, label){
                                      box(width = 12,
                                          # Filters choices are generated on server side, based on dataset content
                                          fluidRow( 
-                                           p(style="padding-left:15px", "Filter SAE by characteristics: delete those that do not apply."),
+                                           p(style="padding-left:15px", "Filter Events by characteristics: delete those that do not apply."),
                                            # Filter by report type (e.g. initial / final / follow-up)
-                                           column(4, uiOutput(ns("sae_filter_report_type_ui"))), 
+                                           column(4, uiOutput(ns("ae_filter_report_type_ui"))), 
                                            #Filter by serverity (e.g. Mild / Moderate / Severe)
-                                           column(4, uiOutput(ns("sae_filter_severity_ui"))),
+                                           column(4, uiOutput(ns("ae_filter_severity_ui"))),
                                            #Filter by expectedness (e.g. Expected / Unexpected)
-                                           column(4, uiOutput(ns("sae_filter_expectedness_ui")))
+                                           column(4, uiOutput(ns("ae_filter_expectedness_ui")))
                                          ),
                                          fluidRow( 
-                                           column(6, uiOutput(ns("sae_filter_outcome_ui"))), 
-                                           column(6, uiOutput(ns("sae_filter_causality_ui")))
+                                           column(4, uiOutput(ns("ae_filter_seriousness_ui"))),
+                                           column(4, uiOutput(ns("ae_filter_outcome_ui"))), 
+                                           column(4, uiOutput(ns("ae_filter_causality_ui")))
                                          )
                                      ),
                                      
@@ -56,28 +57,27 @@ mod_sae_st_ui <- function(id, label){
                                             title = "",
                                             id = "tabset2",
                                             
-                                            tabPanel("SAE occurence overtime", 
-                                                     h2("Cummulative SAE occurence overtime:"),
-                                                     plotlyOutput(ns("sae_plot_1")), 
+                                            tabPanel("Events occurence overtime",
+                                                     h2("Cummulative events occurence overtime:"),
+                                                     plotlyOutput(ns("sae_plot_1")),
                                                      br(),
-                                                     h2("Cummulative SAE occurence overtime by center:"),
+                                                     h2("Cummulative Events occurence overtime by center:"),
                                                      plotlyOutput(ns("sae_plot_2"))
                                             ),
-                                            tabPanel("SAE number by characteristics", 
-                                                     h2("SAE number by center and by characteristics: "), 
+                                            tabPanel("Events number by characteristics",
+                                                     h2("Events number by center and by characteristics: "),
                                                      uiOutput(ns("sae_fact_sel_ui")),
-                                                     plotlyOutput(ns("sae_plot_3")), 
+                                                     plotlyOutput(ns("sae_plot_3")),
                                                      br(),
-                                                     h2("SAE count table:"), 
-                                                     uiOutput(ns("sae_table_detail_var_ui")), 
+                                                     h2("SAE count table:"),
+                                                     uiOutput(ns("sae_table_detail_var_ui")),
                                                      tableOutput(ns("sae_table")),
-                                            ), 
-                                            tabPanel(width=12, "SAE list",
-                                                     h2("SAE list:"),
+                                            ),
+                                            tabPanel(width=12, "Events list",
+                                                     h2("Events list:"),
                                                      div(DT::dataTableOutput(ns("sae_table_1")), style = "font-size: 90%; width: 100%")
                                             ),
                                             tabPanel(width=12, "AE/SAE distribution",
-                                                     p("in devel... first preview with non reactive sT data"),
                                                      fluidRow(
                                                        column(12, h3("Histogram of the number of events (AE only or AE+SAE) by patient"), plotlyOutput(ns("sae_histogram_1")))
                                                      ),
@@ -94,7 +94,6 @@ mod_sae_st_ui <- function(id, label){
                                                      )
                                             ),
                                             tabPanel(width=12, "AE/SAE follow-up",
-                                                     p("in devel... first preview with non reactive sT data"),
                                                      fluidRow(
                                                        column(12, h3("Histogram of the number of FU (AE+SAE FU) by event"), plotlyOutput(ns("sae_fu_histogram_1")))
                                                      ),
@@ -122,7 +121,7 @@ mod_sae_st_ui <- function(id, label){
 #' @param output standard shiny output argument
 #' @param session standard shiny session argument
 #' @param data.sae data for use in calculations
-mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static, ae, sae, auth){
+mod_sae_st_server <- function(input, output, session, ae, sae, ae.static, sae.static, auth){
   ns <- session$ns
   
   # Get login information for the logged user from from the input parameter 'auth'
@@ -150,22 +149,26 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
   })
   
   # TODO map the variable below to the corresponding variable names in your dataset
-  record_id <- "pat_id" # unique ID of the participant
-  sae_id = "sae_id" #NEW
-  sae_gp_id = "sae_gp_id" #NEW
+  record_id <- "mnpaid" # unique ID of the participant
+  ae_id = "mnpaefuid" #NEW
+  ae_gp_id = "mnpaeid" #NEW
   center <- "centre.short" # center or data access group of participant
-  sae_date <- "sae_date" # date of the SAE
-  sae_report_type <- "sae_report_type" # type of SAE report (e.g. initial / follow-up / final)
-  severity_level <- "severity_level" # severity level of the SAE (e.g. mild / moderate / severe)
-  expectedness <- "expectedness" # expectedness of the SAE (e.g. expected / unexpected)
-  causality <- "causality" # causality of the SAE (e.g. certain / probable / possible / inlikely / not related / not assessable)
-  outcome <- "outcome" # outcome of the SAE (e.g. death / ongoing / resolved without sequelae / resolved with sequelae / other)
+  ae_date <- "mnpaedate" # date of the AE
+  ae_serious <- "aeserious" # type of AE, serious or not (e.g. AE / SAE)
+  
+  ae_severity <- "aegrade" # severity level of the SAE (e.g. mild / moderate / severe)
+  sae_severity <- "saegrade"
+  ae_expectedness <- "aeexpect"  # expectedness of the SAE (e.g. expected / unexpected)
+  sae_expectedness <- "saeexpect"
+  ae_causality <- "aerelationclinic" # causality of the SAE (e.g. certain / probable / possible / inlikely / not related / not assessable)
+  sae_causality <- "saerelationclinic"
+  ae_outcome <- "aeoutcome" # outcome of the SAE (e.g. death / ongoing / resolved without sequelae / resolved with sequelae / other)
+  sae_outcome <- "saeoutcome"
   
   # TODO list here the SAE variables that are factors, they will be available in 
   # the select inputs as categories
-  sae_vars <- c("severity_level", "causality", "expectedness", "outcome", "death", 
-                "life_threatening", "persistant_disability", "hospitalization", 
-                "congenital_anomalia_birth_defect", "sae_report_type", "centre.short") 
+  sae_vars <- c("aeserious", "report_type", "severity", "causality", "expectedness", "outcome", "saeser_death", 
+                "saeser_lifethreat", "saeser_impairement", "saeser_hospital", "centre.short") 
   
   # TODO (optional) You can specify below custom labels to be displayed in place 
   # of the default variable names from your dataset. 
@@ -174,47 +177,90 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
   var.transl <- c("pat_id" = "Patient ID", 
                   "sae_date" = "SAE date", 
                   "sae_description" = "Description of SAE", 
-                  "severity_level" = "Severity level of SAE", 
+                  "severity" = "Severity level of SAE", 
                   "causality" = "Causality / Relatedness", 
                   "expectedness" = "Expectedness",
                   "outcome" = "Outcome", 
-                  "death" = "Resulted in death",
-                  "life_threatening" = "Is life threatening",
-                  "persistant_disability" = "Resulted in permanent disability",
-                  "hospitalization" = "Required hospitalization or prolongation of hospitalization", 
-                  "congenital_anomalia_birth_defect" = "Caused congenital anomaly or birth defect",
-                  "sae_report_type" = "Type of SAE report" , 
-                  "centre.short" = "Center") #A more user friendly way to input data (?)
+                  "saeser_death" = "Resulted in death",
+                  "saeser_lifethreat" = "Is life threatening",
+                  "saeser_impairement" = "Resulted in permanent disability",
+                  "saeser_hospital" = "Required hospitalization or prolongation of hospitalization", 
+                  "report_type" = "Type of SAE report" , 
+                  "centre.short" = "Center",
+                  "aeserious" = "AE seriousness")
+                  
   var.transl <- data.frame(original = names(var.transl), new = var.transl)
   
   
   ## reactive filtered data - filtered based on SAE characteristics (this variable is used in plots)
-  data.sae.filtered <- reactive({
+  data.ae.filtered <- reactive({
     #wait for input to be created
-    req(input$sae_filter_severity, 
-        input$sae_filter_outcome, 
-        input$sae_filter_causality, 
-        input$sae_filter_expectedness, 
-        input$sae_filter_report_type, quietly = T) 
+    req(input$ae_filter_severity,
+        input$ae_filter_seriousness,
+        input$ae_filter_outcome, 
+        input$ae_filter_causality, 
+        input$ae_filter_expectedness, 
+        input$ae_filter_report_type, quietly = T) 
+
+    # #data for AE/SAE (secuTrial)
+    # ae_path_st <- "s_export_CSV_DEVL8_20230320-145336/ae.csv"
+    # sae_path_st <- "s_export_CSV_DEVL8_20230320-145336/sae.csv"
+    # ae_st <- read.delim(ae_path_st, header = T, sep = ",")
+    # sae_st <- read.delim(sae_path_st, header = T, sep = ",")
+    # ae_st$centre.short <- sample(c("A", "B", "C", "D", "E"), nrow(ae_st), replace=T)
+    # #NEW#TEST#
+    # d <- merge(ae_st, sae_st, by = c("mnpaid", "mnpaeid", "mnpaefuid", "mnpaedate"), all=T)
+    
     #filter data based on SAE filters in UI
-    d <- data.sae() #get input data
-    d <- d[d[,severity_level] %in% input$sae_filter_severity,]
-    d <- d[d[,outcome] %in% input$sae_filter_outcome,]
-    d <- d[d[,causality] %in% input$sae_filter_causality,]
-    d <- d[d[,expectedness] %in%  input$sae_filter_expectedness,]
-    d <- d[d[,sae_report_type] %in% input$sae_filter_report_type,]
+    d_sae <- sae() #get input data
+    d_ae <- ae()
+    d <- merge(d_ae, d_sae, by = c("mnpaid", "mnpaeid", "mnpaefuid", "mnpaedate"), all=T)
+
+    d$severity <- ""
+    d$expectedness <- ""
+    d$causality <- ""
+    d$outcome <- ""
+    d$report_type <- ""
+    minfuid <- aggregate(data=d, mnpaefuid ~ mnpaeid, min)
+    for (i in 1:nrow(d)){
+      if(!is.na(d[i, "mnpaeno.y"]) & d[i, "mnpaeno.y"] != ''){
+        d$severity[i] = d[i, sae_severity]
+        d$expectedness[i] = d[i, sae_expectedness]
+        d$causality[i] = d[i, sae_causality]
+        d$outcome[i] = d[i, sae_outcome]
+      }else{
+        d$severity[i] = d[i, ae_severity]
+        d$expectedness[i] = d[i, ae_expectedness]
+        d$causality[i] = d[i, ae_causality]
+        d$outcome[i] = d[i, ae_outcome]
+      }
+      if(d$mnpaefuid[i] == minfuid$mnpaefuid[minfuid$mnpaeid == d$mnpaeid[i]]){
+        d$report_type[i] <- "Initial"
+      }else{
+        d$report_type[i] <- "Follow-up"
+      }
+    }
+
+    d$mnpaedate <- as.POSIXct(d$mnpaedate) #used as ref date in plots)
+    
+    d <- d[d[,"severity"] %in% input$ae_filter_severity,]
+    d <- d[d[,"outcome"] %in% input$ae_filter_outcome,]
+    d <- d[d[,"causality"] %in% input$ae_filter_causality,]
+    d <- d[d[,"expectedness"] %in%  input$ae_filter_expectedness,]
+    d <- d[d[,ae_serious] %in% input$ae_filter_seriousness,]
+    d <- d[d[,"report_type"] %in% input$ae_filter_report_type,]
     d
   })
   
   ## plot of cumulative SAE number (all centers)
   output$sae_plot_1 <- renderPlotly({
-    d <- data.sae.filtered() #get filtered reactive data
-    d <- d[order(d[,sae_date]),] #order the SAE by date
-    d$cumul <- seq_along(d[,sae_date]) #get cumulative count of SAE
-    a <- aggregate(data = d, as.formula(paste0("cumul ~ ", sae_date)), max) #aggregate max (to acount for >1 SAE on same date)
+    d <- data.ae.filtered() #get filtered reactive data
+    d <- d[order(d[,ae_date]),] #order the SAE by date
+    d$cumul <- seq_along(d[,ae_date]) #get cumulative count of SAE
+    a <- aggregate(data = d, as.formula(paste0("cumul ~ ", ae_date)), max) #aggregate max (to acount for >1 SAE on same date)
     #do the plot (+add custom label to hover text as points)
-    p <- ggplot() + geom_step(aes(x=a[,sae_date], y=a$cumul, color=paste0("All (n=", max(a$cumul), ")"))) + 
-      geom_point(aes(x=a[,sae_date], y=a$cumul, text=paste("SAE date:", a[,sae_date], 
+    p <- ggplot() + geom_step(aes(x=a[,ae_date], y=a$cumul, color=paste0("All (n=", max(a$cumul), ")"))) + 
+      geom_point(aes(x=a[,ae_date], y=a$cumul, text=paste("SAE date:", a[,ae_date], 
                                                            "<br>SAE count:", a$cumul)), size=0.5, alpha=0) +
       theme_bw() + labs(x="SAE date", y="SAE cumulative number", color="Center") + 
       scale_color_manual(values=c("#000000"))
@@ -224,9 +270,9 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
   
   ## plot of cumulative SAE number (color by center)
   output$sae_plot_2 <- renderPlotly({
-    d <- data.sae.filtered() #get filtered reactive data
+    d <- data.ae.filtered() #get filtered reactive data
     #order the SAE by date
-    d <- d[order(d[,sae_date]),] 
+    d <- d[order(d[,ae_date]),] 
     
     #get cumulative SAE count by center
     center_list <- sort(unique(d[,center]))
@@ -239,12 +285,12 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
     m <- aggregate(data = d, as.formula(paste0("cumul ~ ", center)), max)
     names(m)[2] <- "tot"
     d <- merge(x = d, y = m, by = center, all.x = T)
-    d <- d[order(d[,sae_date]),]
+    d <- d[order(d[,ae_date]),]
     
     #do the plot (+add custom label to hover text as points)
-    p <- ggplot() +  geom_step(aes(x=d[,sae_date], y=d$cumul, color=paste0(d[,center], " (n=", d$tot, ")") )) + 
-      geom_point(aes(x=d[,sae_date], y=d$cumul, color=paste0(d[,center], " (n=", d$tot, ")"), 
-                     text=paste('SAE date: ', d[,sae_date],
+    p <- ggplot() +  geom_step(aes(x=d[,ae_date], y=d$cumul, color=paste0(d[,center], " (n=", d$tot, ")") )) + 
+      geom_point(aes(x=d[,ae_date], y=d$cumul, color=paste0(d[,center], " (n=", d$tot, ")"), 
+                     text=paste('SAE date: ', d[,ae_date],
                                 '<br>Center:', d[,center],
                                 '<br>SAE count:', d$cumul)), size=0.5, alpha=0) + 
       theme_bw() + labs(x="SAE date", y="SAE cumulative number", color="Center")
@@ -258,7 +304,7 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
     #get input: what factor to use as color? + map to df col name
     req(input$sae_fact_sel) #wait for select input
     f <- input$sae_fact_sel
-    d <- data.sae.filtered() #get filtered reactive data
+    d <- data.ae.filtered() #get filtered reactive data
     if(f != 'None'){
       if( (!f %in% names(d)) & (!is.null(var.transl)) ){
         f <- var.transl$original[var.transl$new == f] #revert back to original if label translated
@@ -287,7 +333,7 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
   # Data Table of SAE count aggregate
   output$sae_table <- renderTable({
     req(input$sae_table_detail_var) #wait for select input
-    d <- data.sae.filtered()
+    d <- data.ae.filtered()
     if(input$sae_table_detail_var != "None"){
       f <- input$sae_table_detail_var
       if( (!f %in% names(d)) & (!is.null(var.transl)) ){
@@ -318,7 +364,7 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
   
   ## DataTable of all SAE
   output$sae_table_1 <- DT::renderDataTable({
-    d <- data.sae.filtered()[order(data.sae.filtered()[,sae_date]),]
+    d <- data.ae.filtered()[order(data.ae.filtered()[,ae_date]),]
     col_names <- names(d)
     for (i in 1:length(col_names)){
       if(col_names[i] %in% var.transl$original){
@@ -334,28 +380,32 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
   
   ## Dynamic UI code
   #list of content - report type
-  sae_report_type_list <- reactive({
-    unique(data.sae.static[, sae_report_type])
+  ae_report_type_list <- reactive({
+    c("Initial", "Follow-up")
   })
   #list of content - SAE severity level
-  severity_level_list <- reactive({
-    unique(data.sae.static[, severity_level])
+  ae_severity_level_list <- reactive({
+    unique(c(ae.static[, ae_severity], sae.static[, sae_severity]))
   })
   #list of content - SAE expectedness
-  sae_expectedness_list <- reactive({
-    unique(data.sae.static[, expectedness])
+  ae_expectedness_list <- reactive({
+    unique(c(ae.static[, ae_expectedness], sae.static[, sae_expectedness]))
   })
   #list of content - SAE causality
-  sae_causality_list <- reactive({
-    unique(data.sae.static[, causality])
+  ae_causality_list <- reactive({
+    unique(c(ae.static[, ae_causality], sae.static[, sae_causality]))
   })
   #list of content - SAE outcome
-  sae_outcome_list <- reactive({
-    unique(data.sae.static[, outcome])
+  ae_outcome_list <- reactive({
+    unique(c(ae.static[, ae_outcome], sae.static[, sae_outcome]))
+  })
+  #list of content - SAE seriousness
+  ae_seriousness_list <- reactive({
+    unique(ae.static[, ae_serious])
   })
   #list of content - SAE variables
   sae_var_list <- reactive({
-    nm <- names(data.sae.static)[names(data.sae.static) %in% sae_vars]
+    nm <- names(data.ae.filtered())[names(data.ae.filtered()) %in% sae_vars]
     #translate varnames if not null
     if(!is.null(var.transl)){
       for(i in 1:nrow(var.transl)){
@@ -369,91 +419,112 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
   
   # Add an * to filters when they are active
   observe({
-    if(length(input$sae_filter_report_type) == length(sae_report_type_list()) ){
+    if(length(input$ae_filter_report_type) == length(ae_report_type_list()) ){
       l <- "Filter by report type"
     }else{
       l <- "Filter by report type*"
     }
-    updateSelectInput(session, 'sae_filter_report_type', label = l, 
+    updateSelectInput(session, 'ae_filter_report_type', label = l, 
                       choices = NULL, selected = NULL)
   })
   observe({
-    if(length(input$sae_filter_severity) == length(severity_level_list())){
+    if(length(input$ae_filter_severity) == length(ae_severity_level_list())){
       l <- "Filter by severity"
     }else{
       l <- "Filter by severity*"
     }
-    updateSelectInput(session, 'sae_filter_severity', label = l,  
+    updateSelectInput(session, 'ae_filter_severity', label = l,  
                       choices = NULL, selected = NULL)
   })
   observe({
-    if(length(input$sae_filter_expectedness) == length(sae_expectedness_list())){
+    if(length(input$ae_filter_expectedness) == length(ae_expectedness_list())){
       l <- "Filter by expectedness"
     }else{
       l <- "Filter by expectedness*"
     }
-    updateSelectInput(session, 'sae_filter_expectedness', label = l,  
+    updateSelectInput(session, 'ae_filter_expectedness', label = l,  
+                      choices = NULL, selected = NULL)
+  })
+  observe({ #NEW#
+    if(length(input$ae_filter_seriousness) == length(ae_seriousness_list())){
+      l <- "Filter by seriousness"
+    }else{
+      l <- "Filter by seriousness*"
+    }
+    updateSelectInput(session, 'ae_filter_seriousness', label = l,
                       choices = NULL, selected = NULL)
   })
   observe({
-    if(length(input$sae_filter_causality) == length(sae_causality_list())){
+    if(length(input$ae_filter_causality) == length(ae_causality_list())){
       l <- "Filter by causality"
     }else{
       l <- "Filter by causality*"
     }
-    updateSelectInput(session, 'sae_filter_causality', label = l,  
+    updateSelectInput(session, 'ae_filter_causality', label = l,  
                       choices = NULL, selected = NULL)
   })
   observe({
-    if(length(input$sae_filter_outcome) == length(sae_outcome_list())){
+    if(length(input$ae_filter_outcome) == length(ae_outcome_list())){
       l <- "Filter by outcome"
     }else{
       l <- "Filter by outcome*"
     }
-    updateSelectInput(session, 'sae_filter_outcome', label = l,  
+    updateSelectInput(session, 'ae_filter_outcome', label = l,  
                       choices = NULL, selected = NULL)
   })
   
   # Dynamic UI - report type
-  output$sae_filter_report_type_ui <- renderUI({
-    choices <- sae_report_type_list()
-    selectInput(inputId = ns('sae_filter_report_type'),
+  output$ae_filter_report_type_ui <- renderUI({
+    choices <- ae_report_type_list()
+    selectInput(inputId = ns('ae_filter_report_type'),
                 label = "Filter by report type", 
                 choices = choices, multiple = T, 
                 selected = choices)
   })
   # Dynamic UI - SAE severity
-  output$sae_filter_severity_ui <- renderUI({
-    choices <- severity_level_list()
-    selectInput(ns("sae_filter_severity"), 
+  output$ae_filter_severity_ui <- renderUI({
+    choices <- ae_severity_level_list()
+    selectInput(ns("ae_filter_severity"), 
                 label = "Filter by severity", 
                 choices = choices, multiple = T, 
                 selected = choices) 
   })
   # Dynamic UI - SAE expectedness
-  output$sae_filter_expectedness_ui <- renderUI({
-    choices <- sae_expectedness_list()
-    selectInput(ns("sae_filter_expectedness"), 
+  output$ae_filter_expectedness_ui <- renderUI({
+    choices <- ae_expectedness_list()
+    selectInput(ns("ae_filter_expectedness"), 
                 label = "Filter by expectedness",  
                 choices = choices, multiple = T, 
                 selected = choices) 
   })
   # Dynamic UI - SAE causality
-  output$sae_filter_causality_ui <- renderUI({
-    choices <- sae_causality_list()
-    selectInput(ns("sae_filter_causality"), 
+  output$ae_filter_causality_ui <- renderUI({
+    choices <- ae_causality_list()
+    selectInput(ns("ae_filter_causality"), 
                 label = "Filter by causality",  
                 choices = choices, multiple = T, 
                 selected = choices) 
   })
+  
   # Dynamic UI - SAE outcome
-  output$sae_filter_outcome_ui <- renderUI({
-    choices <- sae_outcome_list()
-    selectInput(ns("sae_filter_outcome"), 
+  output$ae_filter_outcome_ui <- renderUI({
+    choices <- ae_outcome_list()
+    selectInput(ns("ae_filter_outcome"), 
                 label = "Filter by outcome",  
                 choices = choices, multiple = T, 
                 selected = choices) 
   })
+  
+  # Dynamic UI - SAE seriousness
+  output$ae_filter_seriousness_ui <- renderUI({
+    choices <- ae_seriousness_list()
+    selectInput(ns("ae_filter_seriousness"), 
+                label = "Filter by outcome",  
+                choices = choices, multiple = T, 
+                selected = choices) 
+  })
+  
+  
   # Dynamic UI - SAE variables
   output$sae_table_detail_var_ui <- renderUI({
     choices <- c("None", sae_var_list())
@@ -486,8 +557,8 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
     #sae <- read.delim(sae_path_st, header = T, sep = ",")
     
     # get nb of events + nb of AE + nb of SAE by patient
-    nb_event_by_patient_ae <- aggregate(data = ae, ae$mnpaeid ~ mnpaid, FUN = function(x){length(unique(x))})
-    nb_event_by_patient_sae <- aggregate(data = sae, sae$mnpaeid ~ mnpaid, FUN = function(x){length(unique(x))})               
+    nb_event_by_patient_ae <- aggregate(data = ae(), mnpaeid ~ mnpaid, FUN = function(x){length(unique(x))})
+    nb_event_by_patient_sae <- aggregate(data = sae(), mnpaeid ~ mnpaid, FUN = function(x){length(unique(x))})               
     nb_event_by_patient <- merge(nb_event_by_patient_ae, nb_event_by_patient_sae, by = "mnpaid", all = T)
     names(nb_event_by_patient) <- c("mnpaid", "nb.event", "nb.sae")
     nb_event_by_patient$nb.ae = nb_event_by_patient$nb.event - nb_event_by_patient$nb.sae
@@ -496,6 +567,7 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
     # TODO # get a patient list somehow and add 0 for all not in the list
     patients_list <- c("TEST-0001", "TEST-0002", "TEST-0003", "TEST-0004", "TEST-0005", 
                        "TEST-0006", "TEST-0007", "TEST-0008")
+    
     tmp <- data.frame(mnpaid = patients_list[!patients_list %in% nb_event_by_patient$mnpaid], 
                       nb.event = 0, nb.sae = 0, nb.ae=0)
     # merge and reorder columns
@@ -523,8 +595,8 @@ mod_sae_st_server <- function(input, output, session, data.sae, data.sae.static,
     #ae <- read.delim(ae_path_st, header = T, sep = ",")
     #sae <- read.delim(sae_path_st, header = T, sep = ",")
     
-    nb_fu_by_aeid_ae <- aggregate(data=ae, mnpaefuid ~ mnpaeid * mnpaid, length)
-    nb_fu_by_aeid_sae <- aggregate(data=sae, mnpaefuid ~ mnpaeid, length)
+    nb_fu_by_aeid_ae <- aggregate(data=ae(), mnpaefuid ~ mnpaeid * mnpaid, length)
+    nb_fu_by_aeid_sae <- aggregate(data=sae(), mnpaefuid ~ mnpaeid, length)
     nb_fu_by_aeid <- merge(nb_fu_by_aeid_ae, nb_fu_by_aeid_sae, by = "mnpaeid", suffixes = c(".event", ".sae"), all = T)
     nb_fu_by_aeid[is.na(nb_fu_by_aeid)] <- 0
     nb_fu_by_aeid$mnpaefuid.ae <- nb_fu_by_aeid$mnpaefuid.event - nb_fu_by_aeid$mnpaefuid.sae

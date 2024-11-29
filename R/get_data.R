@@ -181,7 +181,6 @@ get_data <- function(){
   #data for SAE (REDCap)
   sae_descr <- c("headache", "Headache", "Cancer", "Allergic reaction") 
   sae <- data.frame(pat_id = sample(randomized$pat_id, 50, replace = T),
-                    
                     sae_date = sample(seq(as.Date('2017/12/01'), as.Date('2022/03/01'), by="day"), 50), 
                     severity_level = sample(c("Mild", "Moderate", "Severe"), 50, replace = T), 
                     causality = sample(c("Certain", "Probable", "Possible", "Unlikely", "Not related", "Not assessable"), 50, replace = T), 
@@ -196,12 +195,32 @@ get_data <- function(){
                     sae_description = sample(sae_descr, 50, replace = T)) 
   sae$centre.short <- sapply(sae$pat_id, function(x){randomized$centre.short[randomized$pat_id == x]})
   
-  #data for SAE (secuTrial)
+  #data for AE REDCap
+  ae_descr <- c("ae description 1", "ae description 2", "ae description 3")
+  ae <- data.frame(pat_id = sample(randomized$pat_id, 50, replace = T),
+                   ae_date = sample(seq(as.Date('2017/12/01'), as.Date('2022/03/01'), by="day"), 50), 
+                   severity_level = sample(c("Mild", "Moderate", "Severe"), 50, replace = T), 
+                   causality = sample(c("Certain", "Probable", "Possible", "Unlikely", "Not related", "Not assessable"), 50, replace = T), 
+                   expectedness = sample(c("Expected", "Unexpected"), 50, replace = T), 
+                   outcome = sample(c("Resolved without sequelae", "Resolved with sequelae", "Ongoing", "Death", "Unknown", "Other"), 50, replace = T), 
+                   death = sample(c("Yes", "No"), 50, T), 
+                   life_threatening = sample(c("Yes", "No"), 50, T),
+                   persistant_disability = sample(c("Yes", "No"), 50, T),
+                   hospitalization = sample(c("Yes", "No"), 50, T),
+                   congenital_anomalia_birth_defect = sample(c("Yes", "No"), 50, T), 
+                   ae_report_type = sample(c("Initial", "Follow-up", "Final"), 50, replace = T), 
+                   ae_description = sample(ae_descr, 50, replace = T)) 
+  ae$centre.short <- sapply(ae$pat_id, function(x){randomized$centre.short[randomized$pat_id == x]})
+  
+  #data for AE/SAE (secuTrial)
   ae_path_st <- "s_export_CSV_DEVL8_20230320-145336/ae.csv"
   sae_path_st <- "s_export_CSV_DEVL8_20230320-145336/sae.csv"
   ae_st <- read.delim(ae_path_st, header = T, sep = ",")
   sae_st <- read.delim(sae_path_st, header = T, sep = ",")
-  
+  ae_st$centre.short <- sample(c("A", "B", "C", "D", "E"), nrow(ae_st), replace=T)
+  ae_center <- ae_st[, c("mnpaid", "mnpaeid", "mnpaefuid", "centre.short")]
+  sae_st <- merge(sae_st, ae_center, by = c("mnpaid", "mnpaeid", "mnpaefuid"), all.x = T)
+  names(sae_st)[names(sae_st) == "centre.short"] <- "centre.short.sae"
   
   consistency <- randomized %>% 
     mutate(height = rnorm(nrow(randomized), 170, 30),
@@ -337,6 +356,7 @@ get_data <- function(){
     study_params = study_params,
     consistency = consistency, 
     sae = sae,
+    ae = ae,
     ae_st = ae_st,
     sae_st = sae_st
   )

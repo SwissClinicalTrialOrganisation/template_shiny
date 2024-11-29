@@ -30,7 +30,7 @@ if(!exists("users.sqlite")){
     # You can either check a user role or use a specfic boolean in the modules
     role = c("admin", "user", "guest"),             
     access_sae = c(TRUE, TRUE, FALSE),
-    access_ae = c(FALSE, TRUE, FALSE),
+    access_ae = c(TRUE, TRUE, FALSE),
     stringsAsFactors = FALSE
   )
   
