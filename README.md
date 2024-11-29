@@ -66,8 +66,8 @@ quality.
     together with an information box.
 
 -   **Recruitment (accrualPlot)** `mod_recruitment2` is as above, but
-    using the [`accrualPlot`](https://ctu-bern.github.io/accrualPlot/).
-    It also includes a table of recruitment information per site.
+    using the package [`accrualPlot`](https://ctu-bern.github.io/accrualPlot/).
+    It also includes some vlaue boxes as well as a table of recruitment information per site.
 
 -   **Recruitment map** `mod_recruitment_map` shows a leaflet map,
     showing site locations, linked to a recruitment plot (based on
