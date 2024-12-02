@@ -14,24 +14,30 @@ mod_recruitment_prediction_ui <- function(id, label) {
   ns <- NS(id)
   tabItem(
     tabName = label,
-    fluidRow(
-      tabBox(
-        width = 12,
-        title = "",
-        id = "tabset1", height = "450px",
-        selected = "Predicted end date by site",
-        tabPanel("Predicted end date by site",
-                 plotlyOutput(ns("predictplot_site"), height = "400"),
-                 tags$br()
-        ),
-        tabPanel("Predicted end date using different target definitions",
-                 selectInput(ns("filter_add"), "Choose definition for accrual target", choices = c("At least 1 QoL done", "FU1 performed"), selected = "None"),
-                 tags$br(),
-                 plotlyOutput(ns("predictplot"), height = "400"),
-                 tags$br(),
-                 gt::gt_output(ns('recruittable'))
-        )
-      )
+    tabsetPanel(id = ns("switcher"), type="hidden", 
+                tabPanelBody("loading", icon('transfer', lib = 'glyphicon'), HTML('&nbsp;&nbsp;'), "loading...", ),
+                tabPanelBody("not_authorized", icon("lock", "fa-2x"), HTML('&nbsp;&nbsp;'), "You are not authorized to access this module."),   
+                tabPanelBody("authorized",  
+                  fluidRow(
+                    tabBox(
+                      width = 12,
+                      title = "",
+                      id = "tabset1", height = "450px",
+                      selected = "Predicted end date by site",
+                      tabPanel("Predicted end date by site",
+                               plotlyOutput(ns("predictplot_site"), height = "400"),
+                               tags$br()
+                      ),
+                      tabPanel("Predicted end date using different target definitions",
+                               selectInput(ns("filter_add"), "Choose definition for accrual target", choices = c("At least 1 QoL done", "FU1 performed"), selected = "None"),
+                               tags$br(),
+                               plotlyOutput(ns("predictplot"), height = "400"),
+                               tags$br(),
+                               gt::gt_output(ns('recruittable'))
+                      )
+                    )
+                  )
+                )
     )
   )
 }
@@ -43,9 +49,23 @@ mod_recruitment_prediction_ui <- function(id, label) {
 #' @param data.randomized reactive data containing randomization info
 #' @param centers parameters on site level incl. overall (needed for gg_accrual_plot_predict with targets)
 
-mod_recruitment_prediction_server <- function(input, output, session, data.randomized, centers) {
+mod_recruitment_prediction_server <- function(input, output, session, data.randomized, centers, auth) {
   ns <- session$ns
 
+  #### test login ####
+  access_granted = reactive({
+    return(auth$access_recruitment_prediction)
+  })
+  #switch tabsetpanel depending on user rights for the module
+  observe({
+    req(access_granted())
+    if(access_granted())
+      updateTabsetPanel(inputId = "switcher", selected = "authorized")
+    else{
+      updateTabsetPanel(inputId = "switcher", selected = "not_authorized")
+    }
+  })
+  
     acc <- reactive({
       if (nlevels(factor(data.randomized()$centre.short))==1)
       {

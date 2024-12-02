@@ -29,6 +29,7 @@ if(!exists("users.sqlite")){
     # User additional parameters here to grant / refuse access to specific modules
     # You can either check a user role or use a specfic boolean in the modules
     role = c("admin", "user", "guest"),             
+    access_recruitment_prediction = c(TRUE, TRUE, FALSE),
     access_sae = c(TRUE, TRUE, FALSE),
     access_ae = c(TRUE, TRUE, FALSE),
     stringsAsFactors = FALSE

@@ -34,7 +34,7 @@ app_server <- function(input, output, session ) {
   # mock data
   callModule(mod_recruitment_prediction_server, mod$recruitment_prediction,
              data.randomized = rx.data$rx_random,
-             centers = data$centers)
+             centers = data$centers, auth=res_auth)
   # REDCap data
   # callModule(mod_recruitment_prediction_server, mod$recruitment_prediction,
   #            data.randomized = rx.rc_data$rx_random,
